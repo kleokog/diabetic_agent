@@ -1,0 +1,6 @@
+# Core dependencies for Diabetic Agent
+streamlit
+pandas
+numpy
+plotly
+pydantic
