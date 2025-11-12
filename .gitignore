@@ -15,6 +15,8 @@ ENV/
 *.db
 *.sqlite
 *.sqlite3
+# But keep backup files for reference (optional - you can remove this if you want to ignore backups too)
+# *.db.backup
 
 # IDE
 .vscode/

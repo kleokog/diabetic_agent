@@ -5,7 +5,7 @@ Database manager for the diabetic agent using SQLite
 import sqlite3
 import json
 from datetime import datetime, date, timedelta
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from pathlib import Path
 
 from .models import (
@@ -193,6 +193,51 @@ class DatabaseManager:
             preferences=json.loads(row['preferences'] or '{}')
         )
     
+    def find_user_by_name(self, name: str) -> Optional[int]:
+        """Find user ID by name (case-insensitive)"""
+        conn = self._get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("SELECT user_id FROM user_profiles WHERE LOWER(name) = LOWER(?)", (name,))
+        row = cursor.fetchone()
+        conn.close()
+        
+        if row is None:
+            return None
+        return row['user_id']
+    
+    def get_all_users(self) -> List[Dict[str, Any]]:
+        """Get list of all users"""
+        conn = self._get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("SELECT user_id, name, age, diabetes_type FROM user_profiles ORDER BY name")
+        rows = cursor.fetchall()
+        conn.close()
+        
+        return [
+            {
+                'user_id': row['user_id'],
+                'name': row['name'],
+                'age': row['age'],
+                'diabetes_type': row['diabetes_type']
+            }
+            for row in rows
+        ]
+    
+    def get_next_user_id(self) -> int:
+        """Get the next available user_id"""
+        conn = self._get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("SELECT MAX(user_id) as max_id FROM user_profiles")
+        row = cursor.fetchone()
+        conn.close()
+        
+        if row is None or row['max_id'] is None:
+            return 1
+        return row['max_id'] + 1
+    
     def add_blood_sugar_level(self, reading: BloodSugarLevel, user_id: int = 1):
         """Add blood sugar reading"""
         conn = self._get_connection()
@@ -213,18 +258,28 @@ class DatabaseManager:
         conn.commit()
         conn.close()
     
-    def get_blood_sugar_levels(self, user_id: int = 1, days: int = 30) -> List[BloodSugarLevel]:
-        """Get blood sugar levels for a user within specified days"""
+    def get_blood_sugar_levels(self, user_id: int = 1, days: int = 30, 
+                               start_date: Optional[datetime] = None, 
+                               end_date: Optional[datetime] = None) -> List[BloodSugarLevel]:
+        """Get blood sugar levels for a user within specified days or date range"""
         conn = self._get_connection()
         cursor = conn.cursor()
         
-        cutoff_date = (datetime.now() - timedelta(days=days)).isoformat()
-        
-        cursor.execute("""
-            SELECT * FROM blood_sugar_levels 
-            WHERE user_id = ? AND timestamp >= ?
-            ORDER BY timestamp DESC
-        """, (user_id, cutoff_date))
+        if start_date is not None and end_date is not None:
+            # Use date range
+            cursor.execute("""
+                SELECT * FROM blood_sugar_levels 
+                WHERE user_id = ? AND timestamp >= ? AND timestamp <= ?
+                ORDER BY timestamp DESC
+            """, (user_id, start_date.isoformat(), end_date.isoformat()))
+        else:
+            # Use days from now
+            cutoff_date = (datetime.now() - timedelta(days=days)).isoformat()
+            cursor.execute("""
+                SELECT * FROM blood_sugar_levels 
+                WHERE user_id = ? AND timestamp >= ?
+                ORDER BY timestamp DESC
+            """, (user_id, cutoff_date))
         
         rows = cursor.fetchall()
         conn.close()
@@ -266,18 +321,28 @@ class DatabaseManager:
         conn.commit()
         conn.close()
     
-    def get_meal_logs(self, user_id: int = 1, days: int = 30) -> List[MealLog]:
-        """Get meal logs for a user within specified days"""
+    def get_meal_logs(self, user_id: int = 1, days: int = 30,
+                     start_date: Optional[datetime] = None,
+                     end_date: Optional[datetime] = None) -> List[MealLog]:
+        """Get meal logs for a user within specified days or date range"""
         conn = self._get_connection()
         cursor = conn.cursor()
         
-        cutoff_date = (datetime.now() - timedelta(days=days)).isoformat()
-        
-        cursor.execute("""
-            SELECT * FROM meal_logs 
-            WHERE user_id = ? AND timestamp >= ?
-            ORDER BY timestamp DESC
-        """, (user_id, cutoff_date))
+        if start_date is not None and end_date is not None:
+            # Use date range
+            cursor.execute("""
+                SELECT * FROM meal_logs 
+                WHERE user_id = ? AND timestamp >= ? AND timestamp <= ?
+                ORDER BY timestamp DESC
+            """, (user_id, start_date.isoformat(), end_date.isoformat()))
+        else:
+            # Use days from now
+            cutoff_date = (datetime.now() - timedelta(days=days)).isoformat()
+            cursor.execute("""
+                SELECT * FROM meal_logs 
+                WHERE user_id = ? AND timestamp >= ?
+                ORDER BY timestamp DESC
+            """, (user_id, cutoff_date))
         
         rows = cursor.fetchall()
         conn.close()

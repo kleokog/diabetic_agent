@@ -96,14 +96,17 @@ class SimpleDiabeticAgent:
             preferences=kwargs.get('preferences', {})
         )
         
+        # Save to database
+        self.db.add_user_profile(profile, self.user_id)
+        
         self.user_profile = profile
         return profile
     
     def add_blood_sugar_reading(self, value: float, measurement_type: str = "manual", 
-                               notes: str = None) -> BloodSugarLevel:
+                               notes: Optional[str] = None, timestamp: Optional[datetime] = None) -> BloodSugarLevel:
         """Add a blood sugar reading"""
         reading = BloodSugarLevel(
-            timestamp=datetime.now(),
+            timestamp=timestamp or datetime.now(),
             value=value,
             measurement_type=measurement_type,
             notes=notes
@@ -113,14 +116,17 @@ class SimpleDiabeticAgent:
         return reading
     
     def log_meal(self, meal_type: str, food_items: List[str], 
-                 quantities: List[float], notes: str = None) -> Dict[str, Any]:
+                 quantities: List[float], notes: Optional[str] = None, 
+                 timestamp: Optional[datetime] = None) -> Dict[str, Any]:
         """Log a meal with food items"""
+        from .models import FoodItem, MealLog
+        
         total_calories = 0
         total_carbs = 0
         total_protein = 0
         total_fat = 0
         
-        meal_details = []
+        food_item_objects = []
         
         for food, quantity in zip(food_items, quantities):
             if food.lower() in self.food_db:
@@ -137,27 +143,107 @@ class SimpleDiabeticAgent:
                 total_protein += protein
                 total_fat += fat
                 
-                meal_details.append({
-                    "food": food,
-                    "quantity": quantity,
-                    "calories": calories,
-                    "carbs": carbs,
-                    "protein": protein,
-                    "fat": fat
-                })
+                # Create FoodItem object
+                food_item = FoodItem(
+                    name=food,
+                    quantity=quantity,
+                    unit="grams",
+                    calories=calories,
+                    carbohydrates=carbs,
+                    protein=protein,
+                    fat=fat
+                )
+                food_item_objects.append(food_item)
         
-        meal_log = {
-            "timestamp": datetime.now(),
+        # Create MealLog object
+        meal_timestamp = timestamp or datetime.now()
+        meal_log = MealLog(
+            timestamp=meal_timestamp,
+            meal_type=meal_type,
+            food_items=food_item_objects,
+            total_calories=total_calories,
+            total_carbs=total_carbs,
+            total_protein=total_protein,
+            total_fat=total_fat,
+            notes=notes
+        )
+        
+        # Save to database
+        self.db.add_meal_log(meal_log, self.user_id)
+        
+        # Return dictionary for compatibility
+        return {
+            "timestamp": meal_timestamp,
             "meal_type": meal_type,
-            "food_items": meal_details,
+            "food_items": [{
+                "food": item.name,
+                "quantity": item.quantity,
+                "calories": item.calories,
+                "carbs": item.carbohydrates,
+                "protein": item.protein,
+                "fat": item.fat
+            } for item in food_item_objects],
             "total_calories": total_calories,
             "total_carbs": total_carbs,
             "total_protein": total_protein,
             "total_fat": total_fat,
             "notes": notes
         }
+    
+    def import_meal_from_nutrition_data(self, meal_type: str, timestamp: datetime,
+                                       calories: float, carbs: float, protein: float, 
+                                       fat: float, notes: Optional[str] = None,
+                                       fiber: Optional[float] = None, 
+                                       sugar: Optional[float] = None) -> Dict[str, Any]:
+        """Import a meal from aggregated nutrition data (e.g., from MyFitnessPal CSV)"""
+        from .models import FoodItem, MealLog
         
-        return meal_log
+        # Create a single food item representing the imported meal
+        food_item = FoodItem(
+            name="Imported Meal",
+            quantity=1.0,
+            unit="meal",
+            calories=calories,
+            carbohydrates=carbs,
+            protein=protein,
+            fat=fat,
+            fiber=fiber,
+            sugar=sugar
+        )
+        
+        # Create MealLog object
+        meal_log = MealLog(
+            timestamp=timestamp,
+            meal_type=meal_type,
+            food_items=[food_item],
+            total_calories=calories,
+            total_carbs=carbs,
+            total_protein=protein,
+            total_fat=fat,
+            notes=notes
+        )
+        
+        # Save to database
+        self.db.add_meal_log(meal_log, self.user_id)
+        
+        # Return dictionary for compatibility
+        return {
+            "timestamp": timestamp,
+            "meal_type": meal_type,
+            "food_items": [{
+                "food": "Imported Meal",
+                "quantity": 1.0,
+                "calories": calories,
+                "carbs": carbs,
+                "protein": protein,
+                "fat": fat
+            }],
+            "total_calories": calories,
+            "total_carbs": carbs,
+            "total_protein": protein,
+            "total_fat": fat,
+            "notes": notes
+        }
     
     def get_blood_sugar_analysis(self, days: int = 7) -> Dict[str, Any]:
         """Get blood sugar analysis"""
