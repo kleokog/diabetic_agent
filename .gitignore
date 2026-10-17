@@ -49,3 +49,6 @@ build/
 .coverage
 htmlcov/
 
+
+# Personal health data exports (never commit)
+External files/
