@@ -1,0 +1,272 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="app">
+  <aside class="rail" aria-label="Main navigation">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span class="brand-name">Glucose Coach</span>
+    </div>
+    <nav class="rail-nav">
+      <a href="#today" class="nav-item" data-nav="today"><svg class="icon"><use href="#i-today"/></svg><span>Today</span></a>
+      <a href="#trends" class="nav-item" data-nav="trends"><svg class="icon"><use href="#i-trends"/></svg><span>Trends</span></a>
+      <a href="#coach" class="nav-item" data-nav="coach"><svg class="icon"><use href="#i-coach"/></svg><span>Coach</span></a>
+      <a href="#journal" class="nav-item" data-nav="journal"><svg class="icon"><use href="#i-journal"/></svg><span>Journal</span></a>
+    </nav>
+    <button type="button" class="btn btn-primary rail-log" data-open-sheet><svg class="icon"><use href="#i-plus"/></svg><span>Log</span></button>
+    <a href="#settings" class="nav-item rail-settings" data-nav="settings"><svg class="icon"><use href="#i-settings"/></svg><span>Settings</span></a>
+  </aside>
+
+  <header class="topbar">
+    <span class="brand-mark" aria-hidden="true"></span>
+    <a href="#settings" class="icon-btn" aria-label="Settings" data-nav="settings"><svg class="icon"><use href="#i-settings"/></svg></a>
+  </header>
+
+  <main class="content">
+    <!-- Today -->
+    <section class="view" data-view="today" aria-labelledby="today-title">
+      <header class="view-head">
+        <div>
+          <p class="eyebrow" id="today-eyebrow">Today</p>
+          <h1 id="today-title">&nbsp;</h1>
+        </div>
+        <div class="day-nav">
+          <button type="button" class="icon-btn" id="day-prev" aria-label="Previous day with data"><svg class="icon"><use href="#i-chevron-left"/></svg></button>
+          <button type="button" class="icon-btn" id="day-next" aria-label="Next day with data"><svg class="icon"><use href="#i-chevron-right"/></svg></button>
+        </div>
+      </header>
+
+      <div class="notice" id="stale-notice" hidden>
+        <p id="stale-text"></p>
+        <a href="#import" class="notice-link">Import data</a>
+      </div>
+
+      <div class="today-grid">
+        <article class="card hero">
+          <p class="card-label">Latest reading</p>
+          <div class="hero-value">
+            <span class="big-number" id="latest-value">–</span>
+            <div class="hero-meta">
+              <svg class="icon trend-arrow" id="latest-trend" hidden><use href="#i-arrow"/></svg>
+              <span class="unit">mg/dL</span>
+            </div>
+          </div>
+          <div class="hero-foot">
+            <span class="chip" id="latest-state">No data</span>
+            <span class="muted" id="latest-time"></span>
+          </div>
+        </article>
+
+        <article class="card tir">
+          <div class="tir-ring">
+            <svg viewBox="0 0 120 120" class="ring" aria-hidden="true">
+              <circle cx="60" cy="60" r="52" class="ring-track"/>
+              <circle cx="60" cy="60" r="52" class="ring-value" id="tir-ring"/>
+            </svg>
+            <div class="ring-label">
+              <span class="ring-number" id="tir-value">–</span>
+              <span class="ring-caption" id="tir-caption">in range</span>
+            </div>
+          </div>
+          <div class="tir-bands">
+            <div class="band-bar" id="band-bar" aria-hidden="true"></div>
+            <ul class="band-legend" id="band-legend"></ul>
+          </div>
+        </article>
+      </div>
+
+      <article class="card chart-card">
+        <header class="card-head">
+          <div>
+            <h2>Glucose</h2>
+            <p class="muted" id="chart-subtitle">24 hours</p>
+          </div>
+        </header>
+        <div class="chart" id="day-chart">
+          <div class="chart-tooltip" id="chart-tooltip" hidden></div>
+        </div>
+      </article>
+
+      <div class="stat-row">
+        <div class="stat"><span class="stat-label">Average</span><span class="stat-value" id="stat-average">–</span></div>
+        <div class="stat"><span class="stat-label">Lows below 70</span><span class="stat-value" id="stat-lows">–</span></div>
+        <div class="stat"><span class="stat-label" id="stat-above-label">Hours above</span><span class="stat-value" id="stat-above">–</span></div>
+        <div class="stat"><span class="stat-label">Sensor coverage</span><span class="stat-value" id="stat-coverage">–</span></div>
+        <div class="stat"><span class="stat-label">Rapid insulin</span><span class="stat-value" id="stat-insulin">–</span><span class="stat-caption" id="stat-long"></span></div>
+      </div>
+
+      <article class="card coach-preview">
+        <header class="card-head">
+          <h2>Coach</h2>
+          <a href="#coach" class="link">See all</a>
+        </header>
+        <p class="empty-text">Your top recommendations will appear here once the coach is switched on.</p>
+      </article>
+    </section>
+
+    <!-- Trends -->
+    <section class="view" data-view="trends" hidden>
+      <header class="view-head"><div><p class="eyebrow">Trends</p><h1>Patterns over time</h1></div></header>
+      <article class="card empty-card">
+        <svg class="icon empty-icon"><use href="#i-trends"/></svg>
+        <h2>Coming next</h2>
+        <p class="empty-text">Time in range by band, average, GMI and variability, your daily pattern by hour, best and worst meals, sleep, workouts and heart rate.</p>
+      </article>
+    </section>
+
+    <!-- Coach -->
+    <section class="view" data-view="coach" hidden>
+      <header class="view-head"><div><p class="eyebrow">Coach</p><h1>Recommendations</h1></div></header>
+      <article class="card empty-card">
+        <svg class="icon empty-icon"><use href="#i-coach"/></svg>
+        <h2>Coming next</h2>
+        <p class="empty-text">Every finding, ranked: safety first, then your biggest wins. Each one shows the evidence, a confidence level and one thing to try.</p>
+      </article>
+    </section>
+
+    <!-- Journal -->
+    <section class="view" data-view="journal" hidden>
+      <header class="view-head"><div><p class="eyebrow">Journal</p><h1>Everything you logged</h1></div></header>
+      <article class="card empty-card">
+        <svg class="icon empty-icon"><use href="#i-journal"/></svg>
+        <h2>Coming next</h2>
+        <p class="empty-text">A timeline of glucose events, insulin, eating, workouts, sleep and check-ins, with edit and delete.</p>
+      </article>
+    </section>
+
+    <!-- Import -->
+    <section class="view" data-view="import" hidden>
+      <header class="view-head"><div><p class="eyebrow">Data</p><h1>Import</h1></div></header>
+
+      <label class="card dropzone" id="dropzone">
+        <input type="file" id="import-file" accept=".csv,text/csv" class="visually-hidden" />
+        <svg class="icon dropzone-icon"><use href="#i-plus"/></svg>
+        <span class="dropzone-title" id="dropzone-title">Drop your LibreLink export here, or choose a file</span>
+        <span class="muted dropzone-hint">On libreview.com, open Glucose History and choose Download glucose data. Cronometer and Whoop are coming next.</span>
+      </label>
+
+      <p class="form-message error" id="import-error" hidden></p>
+
+      <article class="card review" id="import-review" hidden>
+        <header class="card-head">
+          <div>
+            <p class="eyebrow" id="review-format"></p>
+            <h2 id="review-file"></h2>
+            <p class="muted" id="review-range"></p>
+          </div>
+        </header>
+        <ul class="review-items" id="review-items"></ul>
+        <div class="review-insulin" id="review-insulin" hidden>
+          <p id="review-insulin-text"></p>
+          <label class="check"><input type="checkbox" id="include-priming" /><span>Count priming shots as doses</span></label>
+        </div>
+        <ul class="review-notes" id="review-notes"></ul>
+        <div class="review-foot">
+          <label class="field review-from"><span class="field-label">Only import from (optional)</span><input type="date" id="import-from" /></label>
+          <div class="review-actions">
+            <button type="button" class="btn btn-ghost" id="import-cancel">Cancel</button>
+            <button type="button" class="btn btn-primary" id="import-commit">Import</button>
+          </div>
+        </div>
+      </article>
+
+      <article class="card result" id="import-result" hidden>
+        <h2>Import complete</h2>
+        <ul class="result-list" id="result-list"></ul>
+        <div class="review-actions">
+          <button type="button" class="btn btn-ghost" id="result-undo">Undo this import</button>
+          <a href="#today" class="btn btn-primary">See Today</a>
+        </div>
+      </article>
+    </section>
+
+    <!-- Settings -->
+    <section class="view" data-view="settings" hidden>
+      <header class="view-head"><div><p class="eyebrow">Settings</p><h1>Your setup</h1></div></header>
+
+      <form class="card settings-card" id="form-range" novalidate>
+        <header class="card-head"><div><h2>Goal range</h2><p class="muted">Everything is measured against this range. Lows are always judged at 70 and 54.</p></div></header>
+        <div class="field-row">
+          <label class="field"><span class="field-label">From (mg/dL)</span><input type="number" name="target_low" min="60" max="120" inputmode="numeric" required /></label>
+          <label class="field"><span class="field-label">To (mg/dL)</span><input type="number" name="target_high" min="120" max="250" inputmode="numeric" required /></label>
+        </div>
+        <div class="form-foot"><p class="form-message" role="status"></p><button type="submit" class="btn btn-primary">Save</button></div>
+      </form>
+
+      <form class="card settings-card" id="form-profile" novalidate>
+        <header class="card-head"><div><h2>Profile</h2><p class="muted">Only used to personalise the coach. Your name is never sent to OpenAI.</p></div></header>
+        <div class="field-row">
+          <label class="field"><span class="field-label">Name</span><input type="text" name="name" autocomplete="name" /></label>
+          <label class="field"><span class="field-label">Diabetes type</span>
+            <select name="diabetes_type">
+              <option>Type 1</option><option>Type 2</option><option>LADA</option><option>Other</option>
+            </select>
+          </label>
+        </div>
+        <div class="field-row">
+          <label class="field"><span class="field-label">Rapid-acting insulin</span><input type="text" name="rapid_insulin_name" placeholder="e.g. Fiasp" /></label>
+          <label class="field"><span class="field-label">Long-acting insulin</span><input type="text" name="long_insulin_name" placeholder="e.g. Tresiba" /></label>
+        </div>
+        <div class="form-foot"><p class="form-message" role="status"></p><button type="submit" class="btn btn-primary">Save</button></div>
+      </form>
+
+      <form class="card settings-card" id="form-brief" novalidate>
+        <header class="card-head"><div><h2>Coach brief</h2><p class="muted">Tell the coach what it should know: your routine, constraints, what your diabetes team advised, foods you won't give up, what worries you most. It treats this as a rule.</p></div></header>
+        <label class="field">
+          <span class="field-label visually-hidden">Coach brief</span>
+          <textarea name="coach_brief" rows="7" maxlength="4000" placeholder="e.g. I train with weights in the evenings and won't move that. My team says inject 10–15 minutes before meals. I love pasta: suggest smarter versions, don't tell me to cut it. Morning lows worry me most."></textarea>
+        </label>
+        <div class="form-foot"><p class="form-message" role="status"></p><span class="muted char-count" id="brief-count"></span><button type="submit" class="btn btn-primary">Save</button></div>
+      </form>
+
+      <form class="card settings-card" id="form-insulin" novalidate>
+        <header class="card-head"><div><h2>Insulin rules</h2><p class="muted">Used when importing from LibreLink and your connected pens.</p></div></header>
+        <div class="field-row">
+          <label class="field"><span class="field-label">Doses above (units) are long-acting</span><input type="number" name="long_acting_min_units" min="10" max="100" step="1" inputmode="numeric" /></label>
+          <label class="field"><span class="field-label">Priming shots are up to (units)</span><input type="number" name="priming_max_units" min="0" max="5" step="0.5" inputmode="decimal" /></label>
+          <label class="field"><span class="field-label">Within (minutes) of a dose</span><input type="number" name="priming_window_min" min="1" max="30" step="1" inputmode="numeric" /></label>
+        </div>
+        <div class="form-foot"><p class="form-message" role="status"></p><button type="submit" class="btn btn-primary">Save</button></div>
+      </form>
+
+      <article class="card settings-card">
+        <header class="card-head">
+          <div><h2>Data</h2><p class="muted">Import exports from LibreLink (required), Cronometer and Whoop.</p></div>
+          <a href="#import" class="btn btn-primary">Import files</a>
+        </header>
+        <ul class="history-list" id="import-history"></ul>
+      </article>
+
+      {% if auth_enabled %}
+      <form method="post" action="{{ url_for('pages.logout') }}" class="settings-logout">
+        <button type="submit" class="btn btn-ghost">Log out</button>
+      </form>
+      {% endif %}
+    </section>
+  </main>
+
+  <nav class="tabbar" aria-label="Main navigation">
+    <a href="#today" class="tab" data-nav="today"><svg class="icon"><use href="#i-today"/></svg><span>Today</span></a>
+    <a href="#trends" class="tab" data-nav="trends"><svg class="icon"><use href="#i-trends"/></svg><span>Trends</span></a>
+    <button type="button" class="tab tab-log" data-open-sheet aria-label="Log something"><span class="tab-log-button"><svg class="icon"><use href="#i-plus"/></svg></span></button>
+    <a href="#coach" class="tab" data-nav="coach"><svg class="icon"><use href="#i-coach"/></svg><span>Coach</span></a>
+    <a href="#journal" class="tab" data-nav="journal"><svg class="icon"><use href="#i-journal"/></svg><span>Journal</span></a>
+  </nav>
+
+  <div class="sheet-backdrop" id="sheet-backdrop" hidden></div>
+  <div class="sheet" id="log-sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title" hidden>
+    <div class="sheet-handle" aria-hidden="true"></div>
+    <header class="sheet-head">
+      <h2 id="sheet-title">Log</h2>
+      <button type="button" class="icon-btn" data-close-sheet aria-label="Close"><svg class="icon"><use href="#i-close"/></svg></button>
+    </header>
+    <div class="log-grid">
+      <button type="button" class="log-tile" disabled><svg class="icon"><use href="#i-drop"/></svg><span>Glucose</span><small>Coming next</small></button>
+      <button type="button" class="log-tile" disabled><svg class="icon"><use href="#i-pen"/></svg><span>Insulin</span><small>Coming next</small></button>
+      <button type="button" class="log-tile" disabled><svg class="icon"><use href="#i-meal"/></svg><span>Food</span><small>Coming next</small></button>
+      <button type="button" class="log-tile" disabled><svg class="icon"><use href="#i-activity"/></svg><span>Activity</span><small>Coming next</small></button>
+      <button type="button" class="log-tile" disabled><svg class="icon"><use href="#i-mood"/></svg><span>Check-in</span><small>Coming next</small></button>
+    </div>
+  </div>
+</div>
+<script type="module" src="{{ asset_url('js/app.js') }}"></script>
+{% endblock %}

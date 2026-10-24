@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Sign in · Glucose Coach{% endblock %}
+{% block body %}
+<main class="login">
+  <form method="post" class="login-card">
+    <p class="eyebrow">Glucose Coach</p>
+    <h1>Welcome back</h1>
+    <label class="field">
+      <span class="field-label">Password</span>
+      <input type="password" name="password" autocomplete="current-password" autofocus required />
+    </label>
+    {% if error %}<p class="form-error">{{ error }}</p>{% endif %}
+    <button type="submit" class="btn btn-primary btn-block">Sign in</button>
+  </form>
+</main>
+{% endblock %}
