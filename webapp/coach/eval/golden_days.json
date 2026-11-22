@@ -1,0 +1,129 @@
+{
+  "version": 1,
+  "principles": [
+    "Safety first: hypos (<70), very highs (≥250), and rapid bolus while already low/near-low outrank meal tips.",
+    "Causal chains beat isolated meal cards: near-low / bolus-while-low → correction → rebound high must not be blamed on the next meal.",
+    "Meal assessments drive food findings: only post_meal_high deserves a meal critique; well_managed must not get invented experiments; started_high / started_low explain prior state.",
+    "Diversify sections: do not return three near-identical Food cards for breakfast/lunch/dinner.",
+    "try_text must fix the real problem with a concrete next-time action — not 'check 1h after meal' filler.",
+    "Never invent carbs, snacks, workouts, or values missing from the context pack.",
+    "Respect coach_brief; avoid unit dose changes unless ratios are present and evidence is clear.",
+    "Estimated meals (schedule + insulin) are timing hypotheses — lower confidence for carb-dose claims."
+  ],
+  "scoring": {
+    "must_mention_any": "At least one finding text should match one of these phrases/regexes (case-insensitive).",
+    "must_not_mention": "No finding text should match these (false blame / filler).",
+    "forbid_sections_all_food": "Fail if every finding has section=food when expected_diverse_sections is true.",
+    "max_findings": "Soft cap; fail if findings exceed this.",
+    "required_assessment_respect": "If a meal is well_managed, findings must not propose changing that meal's bolus/carbs."
+  },
+  "days": [
+    {
+      "id": "rebound_not_dinner",
+      "date": "2026-10-20",
+      "archetype": "afternoon near-low / bolus-while-low → evening high; dinner started_high",
+      "notes": "User feedback: dinner was not the problem; hypo/correction earlier drove the high.",
+      "expect": {
+        "max_findings": 5,
+        "expected_diverse_sections": true,
+        "must_mention_any": [
+          "16:25",
+          "bolus",
+          "76",
+          "rebound",
+          "correction",
+          "near-low",
+          "afternoon",
+          "before dinner"
+        ],
+        "must_not_mention": [
+          "dinner insulin may not have been sufficient",
+          "adjusting the timing of the insulin bolus or the amount based on the pre-meal reading",
+          "check glucose at 1 hour after breakfast",
+          "check glucose at 1 hour after lunch"
+        ],
+        "must_not_blame_meals": ["Dinner"],
+        "should_not_fix_meals": ["Breakfast", "Lunch"],
+        "preferred_sections_any": ["safety", "glucose", "insulin"]
+      },
+      "ideal_story": "3u rapid around 16:25 while ~76 mg/dL, then climb into the 240s before dinner. Dinner pre already high — do not blame dinner. Breakfast/lunch were fine."
+    },
+    {
+      "id": "weekend_breakfast_spike_and_hypo_dinner",
+      "date": "2026-10-17",
+      "archetype": "true post_meal_high breakfast + dinner started_low",
+      "notes": "User example day for meal list UI. Breakfast 74→162 is fair to critique; dinner pre 56 is safety, not well-managed dosing.",
+      "expect": {
+        "max_findings": 5,
+        "expected_diverse_sections": true,
+        "must_mention_any": [
+          "breakfast",
+          "12:07",
+          "162",
+          "56",
+          "low",
+          "hypo"
+        ],
+        "must_not_mention": [
+          "dinner was well managed",
+          "keep this dinner pattern"
+        ],
+        "may_critique_meals": ["Breakfast"],
+        "must_not_blame_meals": ["Lunch"],
+        "should_not_fix_meals": ["Lunch"],
+        "preferred_sections_any": ["safety", "food", "glucose"]
+      },
+      "ideal_story": "Breakfast post-meal high is the main food finding. Lunch stayed flat (well managed). Dinner started at 56 — talk hypo/safety, not meal success."
+    },
+    {
+      "id": "true_lunch_spike",
+      "date": "2026-10-18",
+      "archetype": "post_meal_high lunch with well_managed breakfast/dinner",
+      "notes": "Clean meal-driven lunch spike; other meals OK.",
+      "expect": {
+        "max_findings": 4,
+        "expected_diverse_sections": false,
+        "must_mention_any": ["lunch", "166", "spike", "post"],
+        "must_not_mention": [
+          "check glucose at 1 hour after breakfast",
+          "check glucose at 1 hour after dinner"
+        ],
+        "may_critique_meals": ["Lunch"],
+        "should_not_fix_meals": ["Breakfast", "Dinner"]
+      },
+      "ideal_story": "Focus lunch response; optionally one positive note on breakfast/dinner together — no fake experiments for them."
+    },
+    {
+      "id": "severe_breakfast_spike_chain",
+      "date": "2026-10-11",
+      "archetype": "huge breakfast spike then lunch started_high",
+      "notes": "Breakfast 68→271; lunch started already high — do not double-blame lunch as a separate meal failure.",
+      "expect": {
+        "max_findings": 5,
+        "expected_diverse_sections": true,
+        "must_mention_any": ["breakfast", "271", "68"],
+        "must_not_blame_meals": ["Lunch"],
+        "may_critique_meals": ["Breakfast"],
+        "preferred_sections_any": ["food", "safety", "glucose"]
+      },
+      "ideal_story": "Primary: breakfast spike from low-normal. Lunch high is continuation — say started_high / prior spike, not a second independent meal miss."
+    },
+    {
+      "id": "bolus_while_low_heavy",
+      "date": "2026-10-12",
+      "archetype": "many bolus_while_low flags; meals mostly well_managed",
+      "notes": "Insulin/safety day — not a food lecture.",
+      "expect": {
+        "max_findings": 5,
+        "expected_diverse_sections": true,
+        "must_mention_any": ["bolus", "low", "rapid", "while"],
+        "must_not_mention": [
+          "check glucose at 1 hour after"
+        ],
+        "should_not_fix_meals": ["Breakfast", "Lunch", "Dinner"],
+        "preferred_sections_any": ["safety", "insulin", "glucose"]
+      },
+      "ideal_story": "Lead with risky boluses while glucose already low/near-low. Meals were largely fine — do not invent meal experiments."
+    }
+  ]
+}

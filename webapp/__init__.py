@@ -16,7 +16,8 @@ PUBLIC_ENDPOINTS = {"pages.login", "static"}
 
 
 def create_app() -> Flask:
-    load_dotenv(db.PROJECT_ROOT / ".env")
+    # Prefer project .env over any empty/stale shell exports of the same keys.
+    load_dotenv(db.PROJECT_ROOT / ".env", override=True)
 
     app = Flask(__name__)
     # Without SECRET_KEY, a random key is used and logins reset whenever the app restarts.

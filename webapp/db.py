@@ -286,15 +286,35 @@ DEFAULT_SETTINGS: dict[str, Any] = {
         "Dinner": "20:00",
         "Snacks": "16:00",
     },
+    # Typical main meals when Cronometer has no log for that day (weekday vs weekend).
+    "meal_schedule": {
+        "weekday": {
+            "meal_count": 3,
+            "meals": [
+                {"label": "Breakfast", "time": "08:00"},
+                {"label": "Lunch", "time": "13:00"},
+                {"label": "Dinner", "time": "20:00"},
+            ],
+        },
+        "weekend": {
+            "meal_count": 3,
+            "meals": [
+                {"label": "Breakfast", "time": "09:00"},
+                {"label": "Lunch", "time": "13:30"},
+                {"label": "Dinner", "time": "20:00"},
+            ],
+        },
+    },
     "occasion_gap_min": 45,
     "long_acting_min_units": 25,
     "priming_max_units": 2,
     "priming_window_min": 5,
+    "cv_unstable_pct": 36,
     "coach_brief": "",
 }
 
 INTEGER_SETTINGS = {"target_low", "target_high", "occasion_gap_min", "priming_window_min"}
-NUMBER_SETTINGS = {"long_acting_min_units", "priming_max_units"}
+NUMBER_SETTINGS = {"long_acting_min_units", "priming_max_units", "cv_unstable_pct"}
 
 
 def db_path() -> Path:
@@ -353,6 +373,8 @@ def validate_settings(values: dict[str, Any], current: dict[str, Any] | None = N
         elif key == "default_meal_times":
             if not isinstance(value, dict):
                 raise ValueError("default_meal_times must be an object")
+        elif key == "meal_schedule":
+            value = _validate_meal_schedule(value)
         elif value is not None:
             value = str(value).strip()
         clean[key] = value
@@ -371,6 +393,52 @@ def validate_settings(values: dict[str, Any], current: dict[str, Any] | None = N
         raise ValueError("The priming size must be between 0 and 5 units")
     if not 1 <= merged["priming_window_min"] <= 30:
         raise ValueError("The priming window must be between 1 and 30 minutes")
+    if not 20 <= merged["cv_unstable_pct"] <= 50:
+        raise ValueError("The CV unstable threshold must be between 20 and 50%")
     if "coach_brief" in clean and len(clean["coach_brief"] or "") > 4000:
         raise ValueError("The coach brief is limited to 4,000 characters")
+    if "meal_schedule" in clean:
+        clean["meal_schedule"] = _validate_meal_schedule(clean["meal_schedule"])
     return clean
+
+
+def _validate_meal_schedule(value: Any) -> dict[str, Any]:
+    if not isinstance(value, dict):
+        raise ValueError("meal_schedule must be an object")
+    out: dict[str, Any] = {}
+    for kind in ("weekday", "weekend"):
+        block = value.get(kind)
+        if not isinstance(block, dict):
+            raise ValueError(f"meal_schedule.{kind} must be an object")
+        try:
+            count = int(block.get("meal_count", 3))
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"meal_schedule.{kind}.meal_count must be an integer") from exc
+        if not 1 <= count <= 6:
+            raise ValueError(f"meal_schedule.{kind}.meal_count must be between 1 and 6")
+        meals_in = block.get("meals") or []
+        if not isinstance(meals_in, list):
+            raise ValueError(f"meal_schedule.{kind}.meals must be a list")
+        meals = []
+        for i, meal in enumerate(meals_in[:count]):
+            if not isinstance(meal, dict):
+                raise ValueError(f"meal_schedule.{kind}.meals[{i}] must be an object")
+            label = str(meal.get("label") or f"Meal {i + 1}").strip()[:40]
+            time_s = str(meal.get("time") or "").strip()
+            if not _valid_hhmm(time_s):
+                raise ValueError(f"meal_schedule.{kind}.meals[{i}].time must be HH:MM")
+            meals.append({"label": label or f"Meal {i + 1}", "time": time_s})
+        while len(meals) < count:
+            meals.append({"label": f"Meal {len(meals) + 1}", "time": "12:00"})
+        out[kind] = {"meal_count": count, "meals": meals[:count]}
+    return out
+
+
+def _valid_hhmm(value: str) -> bool:
+    if len(value) != 5 or value[2] != ":":
+        return False
+    try:
+        hh, mm = int(value[:2]), int(value[3:])
+    except ValueError:
+        return False
+    return 0 <= hh <= 23 and 0 <= mm <= 59

@@ -10,6 +10,14 @@ export async function apiPut(path, body) {
   });
 }
 
+export async function apiPost(path, body) {
+  return request(path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+}
+
 async function request(path, options) {
   const response = await fetch(`/api${path}`, { credentials: "same-origin", ...options });
   if (response.status === 401) {

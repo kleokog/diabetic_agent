@@ -18,6 +18,17 @@ export function redrawChart() {
   if (current) drawChart(current);
 }
 
+export function initToday() {
+  const tip = $("cv-tip");
+  const btn = $("cv-tip-btn");
+  if (!btn || !tip) return;
+  btn.addEventListener("click", () => {
+    const open = tip.hidden;
+    tip.hidden = !open;
+    btn.setAttribute("aria-expanded", open ? "true" : "false");
+  });
+}
+
 function render(data) {
   const isToday = data.date === data.today;
   $("today-eyebrow").textContent = isToday ? "Today" : "Day view";
@@ -38,17 +49,61 @@ function render(data) {
     notice.hidden = true;
   }
 
+  renderHero(data);
   renderLatest(data);
   renderTimeInRange(data);
   renderStats(data);
   drawChart(data);
 }
 
+function renderHero(data) {
+  const has = data.readings.length > 0;
+  const threshold = data.cv_unstable_pct ?? 36;
+  $("cv-tip-threshold").textContent = String(threshold);
+
+  const avgBadge = $("hero-avg-badge");
+  if (has && data.average !== null) {
+    $("hero-average").textContent = String(data.average);
+    const band = bandFor(data.average, data.target_low, data.target_high);
+    avgBadge.textContent = band.label;
+    avgBadge.dataset.band = band.key;
+  } else {
+    $("hero-average").textContent = "–";
+    avgBadge.textContent = "No data";
+    avgBadge.removeAttribute("data-band");
+  }
+  if (has && data.min != null && data.max != null) {
+    $("hero-range").textContent = `Range ${data.min}–${data.max}`;
+  } else {
+    $("hero-range").textContent = "";
+  }
+
+  const cv = data.variability;
+  const badge = $("hero-cv-badge");
+  if (cv) {
+    $("hero-cv").textContent = String(cv.cv_pct);
+    badge.textContent = cv.label;
+    badge.dataset.spectrum = cv.spectrum || "";
+    badge.removeAttribute("data-stability");
+    $("hero-cv-meta").textContent = `typically ±${Math.round(cv.sd)} from average`;
+    $("hero-cv-meta").dataset.spectrum = cv.spectrum || "";
+  } else {
+    $("hero-cv").textContent = "–";
+    badge.textContent = has ? "Need more data" : "No data";
+    badge.dataset.spectrum = "";
+    badge.removeAttribute("data-stability");
+    $("hero-cv-meta").textContent = has ? `~8h sensor needed · line at ${threshold}%` : "";
+    $("hero-cv-meta").dataset.spectrum = "";
+  }
+}
+
 function renderLatest(data) {
   const latest = data.latest;
+  const inline = $("latest-inline");
   const state = $("latest-state");
   const arrow = $("latest-trend");
   if (!latest) {
+    inline.hidden = true;
     $("latest-value").textContent = "–";
     state.textContent = "No data";
     state.removeAttribute("data-band");
@@ -56,12 +111,12 @@ function renderLatest(data) {
     arrow.toggleAttribute("hidden", true);
     return;
   }
+  inline.hidden = false;
   const band = bandFor(latest.v, data.target_low, data.target_high);
-  $("latest-value").textContent = latest.v;
+  $("latest-value").textContent = `${latest.v}`;
   state.textContent = band.label;
   state.dataset.band = band.key;
   $("latest-time").textContent = `at ${formatTime(latest.t)}`;
-  // SVG elements have no .hidden property, so the attribute is toggled directly.
   arrow.toggleAttribute("hidden", !latest.trend);
   if (latest.trend) {
     arrow.style.transform = `rotate(${TREND_ROTATION[latest.trend.direction]}deg)`;
@@ -101,17 +156,24 @@ function renderTimeInRange(data) {
 
 function renderStats(data) {
   const has = data.readings.length > 0;
-  $("stat-average").innerHTML = has && data.average !== null ? `${data.average}<small>mg/dL</small>` : "–";
   $("stat-lows").textContent = has ? String(data.lows) : "–";
   $("stat-above-label").textContent = `Hours above ${data.target_high}`;
   $("stat-above").innerHTML = has ? `${data.hours_above_target}<small>h</small>` : "–";
-  $("stat-coverage").innerHTML = has ? `${data.coverage_pct}<small>%</small>` : "–";
   const rapidDoses = data.insulin.filter((d) => d.kind === "rapid").length;
   $("stat-insulin").innerHTML = rapidDoses
-    ? `${formatUnits(data.insulin_totals.rapid)}<small>u · ${rapidDoses} ${rapidDoses === 1 ? "dose" : "doses"}</small>`
+    ? `${formatUnits(data.insulin_totals.rapid)}<small>u · ${rapidDoses}</small>`
     : "–";
+
   const long = data.last_long;
-  $("stat-long").textContent = long ? `Long-acting ${formatUnits(long.units)} u at ${formatTime(long.t)}${long.t.slice(0, 10) < data.date ? " yesterday" : ""}` : "";
+  if (long) {
+    $("stat-long").innerHTML = `${formatUnits(long.units)}<small>u</small>`;
+    $("stat-long-meta").textContent = long.t.slice(0, 10) < data.date
+      ? `at ${formatTime(long.t)} yesterday`
+      : `at ${formatTime(long.t)}`;
+  } else {
+    $("stat-long").textContent = "–";
+    $("stat-long-meta").textContent = "";
+  }
   $("chart-subtitle").textContent = `24 hours · ${data.target_low}–${data.target_high} shaded`;
 }
 
@@ -120,10 +182,29 @@ function formatUnits(value) {
 }
 
 function drawChart(data) {
+  const meals = data.meals || [];
+  const workouts = data.workouts || [];
   renderDayChart($("day-chart"), $("chart-tooltip"), {
     readings: data.readings,
     insulin: data.insulin,
+    meals,
+    workouts,
     targetLow: data.target_low,
     targetHigh: data.target_high,
   });
+  const legend = $("event-legend");
+  if (legend) {
+    const walks = workouts.filter((w) => isWalkingActivity(w.activity));
+    const training = workouts.filter((w) => !isWalkingActivity(w.activity));
+    const show = meals.length > 0 || workouts.length > 0;
+    legend.hidden = !show;
+    legend.querySelector(".event-legend-meal").hidden = meals.length === 0;
+    legend.querySelector(".event-legend-walk").hidden = walks.length === 0;
+    legend.querySelector(".event-legend-training").hidden = training.length === 0;
+  }
+}
+
+function isWalkingActivity(activity) {
+  const name = String(activity || "").trim().toLowerCase();
+  return name === "walking" || name === "walk" || name === "hike" || name === "hiking" || name.includes("walk");
 }

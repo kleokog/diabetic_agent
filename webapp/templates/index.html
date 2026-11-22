@@ -9,6 +9,7 @@
     <nav class="rail-nav">
       <a href="#today" class="nav-item" data-nav="today"><svg class="icon"><use href="#i-today"/></svg><span>Today</span></a>
       <a href="#trends" class="nav-item" data-nav="trends"><svg class="icon"><use href="#i-trends"/></svg><span>Trends</span></a>
+      <a href="#lifestyle" class="nav-item" data-nav="lifestyle"><svg class="icon"><use href="#i-meal"/></svg><span>Lifestyle</span></a>
       <a href="#coach" class="nav-item" data-nav="coach"><svg class="icon"><use href="#i-coach"/></svg><span>Coach</span></a>
       <a href="#journal" class="nav-item" data-nav="journal"><svg class="icon"><use href="#i-journal"/></svg><span>Journal</span></a>
     </nav>
@@ -41,19 +42,43 @@
       </div>
 
       <div class="today-grid">
-        <article class="card hero">
-          <p class="card-label">Latest reading</p>
-          <div class="hero-value">
-            <span class="big-number" id="latest-value">–</span>
-            <div class="hero-meta">
-              <svg class="icon trend-arrow" id="latest-trend" hidden><use href="#i-arrow"/></svg>
-              <span class="unit">mg/dL</span>
+        <article class="card hero hero-day">
+          <div class="hero-pair">
+            <div class="hero-metric">
+              <p class="card-label">Average</p>
+              <div class="hero-value">
+                <span class="big-number" id="hero-average">–</span>
+                <span class="unit">mg/dL</span>
+              </div>
+              <div class="hero-foot">
+                <span class="chip" id="hero-avg-badge">–</span>
+              </div>
+              <p class="muted" id="hero-range"></p>
+            </div>
+            <div class="hero-divider" aria-hidden="true"></div>
+            <div class="hero-metric">
+              <p class="card-label">
+                Variability (CV)
+                <button type="button" class="tip-btn" id="cv-tip-btn" aria-expanded="false" aria-controls="cv-tip">What is CV?</button>
+              </p>
+              <div class="hero-value">
+                <span class="big-number" id="hero-cv">–</span>
+                <span class="unit">%</span>
+              </div>
+              <div class="hero-foot">
+                <span class="chip" id="hero-cv-badge" data-stability="">–</span>
+              </div>
+              <p class="stat-caption" id="hero-cv-meta"></p>
+              <a href="#trends" class="stat-link">7–90 day CV in Trends</a>
             </div>
           </div>
-          <div class="hero-foot">
-            <span class="chip" id="latest-state">No data</span>
-            <span class="muted" id="latest-time"></span>
-          </div>
+          <p class="cv-tip" id="cv-tip" hidden>
+            CV is how swingy glucose is around your average, scored as
+            Perfect, Good, Medium, Bad or Very bad.
+            Bad and Very bad start at the <span id="cv-tip-threshold">36</span>% consensus line.
+            The “typically ±” figure is how far readings usually sit from today’s average, in mg/dL.
+            Multi-day CV (7–90 days) lives on the Trends tab. Libre often doesn’t show this.
+          </p>
         </article>
 
         <article class="card tir">
@@ -80,18 +105,42 @@
             <h2>Glucose</h2>
             <p class="muted" id="chart-subtitle">24 hours</p>
           </div>
+          <div class="latest-inline" id="latest-inline" hidden>
+            <span class="muted">Latest</span>
+            <strong id="latest-value">–</strong>
+            <svg class="icon trend-arrow" id="latest-trend" hidden><use href="#i-arrow"/></svg>
+            <span class="chip" id="latest-state">No data</span>
+            <span class="muted" id="latest-time"></span>
+          </div>
         </header>
         <div class="chart" id="day-chart">
           <div class="chart-tooltip" id="chart-tooltip" hidden></div>
         </div>
+        <ul class="event-legend" id="event-legend" hidden>
+          <li class="event-legend-meal"><span class="event-swatch meal"></span>Meal</li>
+          <li class="event-legend-walk"><span class="event-swatch walk"><svg class="icon"><use href="#i-walk"/></svg></span>Walk</li>
+          <li class="event-legend-training"><span class="event-swatch training"><svg class="icon"><use href="#i-dumbbell"/></svg></span>Gym / training</li>
+        </ul>
       </article>
 
-      <div class="stat-row">
-        <div class="stat"><span class="stat-label">Average</span><span class="stat-value" id="stat-average">–</span></div>
-        <div class="stat"><span class="stat-label">Lows below 70</span><span class="stat-value" id="stat-lows">–</span></div>
-        <div class="stat"><span class="stat-label" id="stat-above-label">Hours above</span><span class="stat-value" id="stat-above">–</span></div>
-        <div class="stat"><span class="stat-label">Sensor coverage</span><span class="stat-value" id="stat-coverage">–</span></div>
-        <div class="stat"><span class="stat-label">Rapid insulin</span><span class="stat-value" id="stat-insulin">–</span><span class="stat-caption" id="stat-long"></span></div>
+      <div class="stat-grid" aria-label="Day details">
+        <div class="stat accent-low">
+          <span class="stat-label">Lows below 70</span>
+          <span class="stat-value" id="stat-lows">–</span>
+        </div>
+        <div class="stat accent-high">
+          <span class="stat-label" id="stat-above-label">Hours above</span>
+          <span class="stat-value" id="stat-above">–</span>
+        </div>
+        <div class="stat accent-rapid">
+          <span class="stat-label">Rapid insulin</span>
+          <span class="stat-value" id="stat-insulin">–</span>
+        </div>
+        <div class="stat accent-long">
+          <span class="stat-label">Long-acting</span>
+          <span class="stat-value" id="stat-long">–</span>
+          <span class="stat-caption" id="stat-long-meta"></span>
+        </div>
       </div>
 
       <article class="card coach-preview">
@@ -99,28 +148,329 @@
           <h2>Coach</h2>
           <a href="#coach" class="link">See all</a>
         </header>
-        <p class="empty-text">Your top recommendations will appear here once the coach is switched on.</p>
+        <div id="coach-preview-body">
+          <p class="empty-text">Your top recommendations will appear here once you refresh the coach.</p>
+        </div>
       </article>
     </section>
 
     <!-- Trends -->
     <section class="view" data-view="trends" hidden>
-      <header class="view-head"><div><p class="eyebrow">Trends</p><h1>Patterns over time</h1></div></header>
-      <article class="card empty-card">
-        <svg class="icon empty-icon"><use href="#i-trends"/></svg>
-        <h2>Coming next</h2>
-        <p class="empty-text">Time in range by band, average, GMI and variability, your daily pattern by hour, best and worst meals, sleep, workouts and heart rate.</p>
+      <header class="view-head">
+        <div>
+          <p class="eyebrow">Trends</p>
+          <h1>Patterns over time</h1>
+        </div>
+        <div class="period-pills" id="trends-periods" role="group" aria-label="Period">
+          <button type="button" class="period-pill" data-days="7">7d</button>
+          <button type="button" class="period-pill active" data-days="14">14d</button>
+          <button type="button" class="period-pill" data-days="30">30d</button>
+          <button type="button" class="period-pill" data-days="90">90d</button>
+        </div>
+      </header>
+
+      <div class="notice" id="trends-notice" hidden>
+        <p id="trends-notice-text"></p>
+        <a href="#import" class="notice-link">Import data</a>
+      </div>
+
+      <article class="card tir-card">
+        <header class="card-head">
+          <div>
+            <p class="card-label">Time in range</p>
+            <h2 id="trends-tir-title">Goal range</h2>
+            <p class="muted" id="trends-bands-subtitle">By band for this period</p>
+          </div>
+        </header>
+
+        <div class="tir-layout">
+          <div class="tir-donut-wrap">
+            <svg class="tir-donut" id="tir-donut" viewBox="0 0 120 120" aria-hidden="true"></svg>
+            <div class="tir-donut-centre">
+              <span class="ring-number" id="trends-tir">–</span>
+              <span class="ring-caption">in range</span>
+            </div>
+          </div>
+          <ul class="band-legend" id="trends-band-legend"></ul>
+        </div>
+
+        <div class="stat-row trends-stats">
+          <div class="stat">
+            <span class="stat-label">Average</span>
+            <span class="stat-value" id="trends-average">–</span>
+            <span class="chip" id="trends-avg-badge">–</span>
+            <span class="stat-caption" id="trends-avg-delta"></span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">GMI (est. A1c)</span>
+            <span class="stat-value" id="trends-gmi">–</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">vs previous TIR</span>
+            <span class="stat-value" id="trends-tir-delta">–</span>
+          </div>
+        </div>
+      </article>
+
+      <article class="card tod-card">
+        <header class="card-head">
+          <div>
+            <h2>By time of day</h2>
+            <p class="muted">Share of readings that are low, in range, or high across the day</p>
+          </div>
+          <ul class="tod-legend" aria-hidden="true">
+            <li><span class="band-dot band-low"></span>Low</li>
+            <li><span class="band-dot band-in_range"></span>In range</li>
+            <li><span class="band-dot band-high"></span>High</li>
+            <li class="tod-legend-line"><span class="tod-line-swatch"></span>In-range %</li>
+          </ul>
+        </header>
+        <div class="tod-stage">
+          <svg class="tod-svg" id="tod-chart" viewBox="0 0 640 220" preserveAspectRatio="none" role="img" aria-label="Glucose bands by hour of day"></svg>
+          <div class="tod-tooltip" id="tod-tooltip" hidden></div>
+        </div>
+        <p class="muted tod-callouts" id="tod-callouts"></p>
+      </article>
+
+      <article class="card variability-card" id="variability-card">
+        <header class="card-head">
+          <div>
+            <p class="card-label">Glycemic variability</p>
+            <h2>How swingy was glucose?</h2>
+          </div>
+          <span class="chip" id="var-badge" data-spectrum="">–</span>
+        </header>
+
+        <div class="var-hero">
+          <div>
+            <span class="big-number" id="var-cv">–</span>
+            <span class="unit">CV%</span>
+          </div>
+          <p class="var-cutoff muted" id="var-cutoff"></p>
+        </div>
+
+        <p class="var-explain" id="var-explain">
+          CV is how swingy glucose is around your average. Perfect to Medium sit under the 36% stability line;
+          Bad and Very bad are at or above it. Libre often doesn’t show this.
+        </p>
+
+        <ol class="cv-scale" id="cv-scale" aria-label="CV spectrum"></ol>
+
+        <div class="var-chart-wrap">
+          <svg id="var-chart" viewBox="0 0 640 160" preserveAspectRatio="none" aria-hidden="true"></svg>
+          <div class="var-chart-labels">
+            <span id="var-chart-start"></span>
+            <span>36% consensus line</span>
+            <span id="var-chart-end"></span>
+          </div>
+        </div>
+
+        <div class="var-meta">
+          <div class="var-meta-item"><span class="stat-label">Typical spread</span><span class="stat-value" id="var-sd">–</span><span class="stat-caption">± mg/dL from average</span></div>
+          <div class="var-meta-item"><span class="stat-label">Within-day CV</span><span class="stat-value" id="var-within">–</span></div>
+          <div class="var-meta-item"><span class="stat-label">Day-to-day spread</span><span class="stat-value" id="var-day-sd">–</span></div>
+          <div class="var-meta-item"><span class="stat-label">vs previous</span><span class="stat-value" id="var-delta">–</span></div>
+        </div>
+        <p class="muted var-period" id="var-period"></p>
+      </article>
+    </section>
+
+    <!-- Lifestyle: food + sleep/activity aggregates -->
+    <section class="view" data-view="lifestyle" hidden>
+      <header class="view-head">
+        <div>
+          <p class="eyebrow">Lifestyle</p>
+          <h1>Food, sleep &amp; activity</h1>
+        </div>
+        <div class="period-pills" id="lifestyle-periods" role="group" aria-label="Period">
+          <button type="button" class="period-pill" data-days="7">7d</button>
+          <button type="button" class="period-pill active" data-days="14">14d</button>
+          <button type="button" class="period-pill" data-days="30">30d</button>
+        </div>
+      </header>
+
+      <div class="notice" id="lifestyle-notice" hidden>
+        <p id="lifestyle-notice-text"></p>
+        <a href="#import" class="notice-link">Import data</a>
+      </div>
+
+      <article class="card life-card" id="food-card">
+        <header class="card-head">
+          <div>
+            <p class="card-label">Food</p>
+            <h2>Carbs &amp; macros</h2>
+            <p class="muted" id="food-range">From Cronometer</p>
+          </div>
+        </header>
+        <div class="life-layout">
+          <div class="macro-donut-wrap">
+            <svg class="macro-donut" id="macro-donut" viewBox="0 0 120 120" aria-hidden="true"></svg>
+            <div class="macro-donut-centre">
+              <span class="ring-number" id="food-avg-carbs">–</span>
+              <span class="ring-caption">g carbs / day</span>
+            </div>
+          </div>
+          <div class="life-side">
+            <ul class="macro-legend" id="macro-legend"></ul>
+            <div class="life-metric-row">
+              <div class="life-metric-chip">
+                <span class="stat-label">Meals / day</span>
+                <span class="stat-value" id="food-meals">–</span>
+              </div>
+              <div class="life-metric-chip">
+                <span class="stat-label">Snacks / day</span>
+                <span class="stat-value" id="food-snacks">–</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="life-bars stacked-bars" id="macro-bars" aria-label="Daily macros"></div>
+        <ul class="chart-mini-legend" aria-hidden="true">
+          <li><span class="macro-swatch macro-carbs"></span>Carbs</li>
+          <li><span class="macro-swatch macro-protein"></span>Protein</li>
+          <li><span class="macro-swatch macro-fat"></span>Fat</li>
+        </ul>
+        <ul class="life-insights" id="food-insights"></ul>
+      </article>
+
+      <article class="card life-card" id="sleep-card">
+        <header class="card-head">
+          <div>
+            <p class="card-label">Sleep</p>
+            <h2>Duration &amp; timing</h2>
+            <p class="muted" id="sleep-range">From Whoop</p>
+          </div>
+        </header>
+        <div class="sleep-hero" id="sleep-hero">
+          <div class="sleep-hero-metric">
+            <span class="stat-label">Avg asleep</span>
+            <span class="stat-value" id="sleep-avg-hours">–</span>
+          </div>
+          <div class="sleep-hero-metric">
+            <span class="stat-label">Typical window</span>
+            <span class="stat-value sleep-window" id="sleep-window">–</span>
+          </div>
+          <div class="sleep-hero-metric">
+            <span class="stat-label">Quality</span>
+            <span class="stat-value" id="sleep-quality">–</span>
+          </div>
+        </div>
+        <div class="sleep-compare" id="sleep-compare" aria-label="Weekday vs weekend">
+          <div class="sleep-col" data-kind="weekday">
+            <p class="sleep-col-title">Weekdays</p>
+            <div class="sleep-duration-track"><div class="sleep-duration-fill" id="sleep-wd-fill"></div></div>
+            <dl class="sleep-dl">
+              <div><dt>Asleep</dt><dd id="sleep-wd-hours">–</dd></div>
+              <div><dt>Bed → wake</dt><dd id="sleep-wd-window">–</dd></div>
+              <div><dt>Quality</dt><dd id="sleep-wd-quality">–</dd></div>
+            </dl>
+          </div>
+          <div class="sleep-col" data-kind="weekend">
+            <p class="sleep-col-title">Weekends</p>
+            <div class="sleep-duration-track"><div class="sleep-duration-fill weekend" id="sleep-we-fill"></div></div>
+            <dl class="sleep-dl">
+              <div><dt>Asleep</dt><dd id="sleep-we-hours">–</dd></div>
+              <div><dt>Bed → wake</dt><dd id="sleep-we-window">–</dd></div>
+              <div><dt>Quality</dt><dd id="sleep-we-quality">–</dd></div>
+            </dl>
+          </div>
+        </div>
+        <ul class="life-insights" id="sleep-insights"></ul>
+      </article>
+
+      <article class="card life-card" id="activity-card">
+        <header class="card-head">
+          <div>
+            <p class="card-label">Activity</p>
+            <h2>Training, walking &amp; heart</h2>
+            <p class="muted" id="activity-range">From Whoop</p>
+          </div>
+        </header>
+        <div class="life-metric-row activity-metrics">
+          <div class="life-metric-chip">
+            <span class="stat-label">Training days</span>
+            <span class="stat-value" id="act-training-days">–</span>
+            <span class="stat-caption" id="act-training-pct"></span>
+          </div>
+          <div class="life-metric-chip">
+            <span class="stat-label">Avg training HR</span>
+            <span class="stat-value" id="act-workout-hr">–</span>
+          </div>
+          <div class="life-metric-chip">
+            <span class="stat-label">Avg walk</span>
+            <span class="stat-value" id="act-walk-min">–</span>
+            <span class="stat-caption" id="act-walk-steps"></span>
+          </div>
+          <div class="life-metric-chip">
+            <span class="stat-label">Resting HR</span>
+            <span class="stat-value" id="act-rhr">–</span>
+          </div>
+        </div>
+        <div class="activity-chart" id="activity-bars" aria-label="Daily training and walking"></div>
+        <ul class="chart-mini-legend" id="activity-legend" aria-hidden="true">
+          <li><span class="act-swatch train"></span>Training strain (left)</li>
+          <li><span class="act-swatch walk-line"></span>Est. walk steps (right)</li>
+        </ul>
+        <p class="muted life-bar-caption" id="activity-caption">Walking is separate from training. Steps estimated from walk minutes (Whoop has no step export).</p>
+        <div class="workout-types" id="workout-types"></div>
+        <ul class="life-insights" id="activity-insights"></ul>
       </article>
     </section>
 
     <!-- Coach -->
     <section class="view" data-view="coach" hidden>
-      <header class="view-head"><div><p class="eyebrow">Coach</p><h1>Recommendations</h1></div></header>
-      <article class="card empty-card">
-        <svg class="icon empty-icon"><use href="#i-coach"/></svg>
-        <h2>Coming next</h2>
-        <p class="empty-text">Every finding, ranked: safety first, then your biggest wins. Each one shows the evidence, a confidence level and one thing to try.</p>
+      <header class="view-head">
+        <div>
+          <p class="eyebrow">Coach</p>
+          <h1>Day feedback</h1>
+          <p class="muted" id="coach-day-subtitle">Meal-centred review for one day</p>
+        </div>
+        <div class="day-nav">
+          <button type="button" class="icon-btn" id="coach-day-prev" aria-label="Previous day"><svg class="icon"><use href="#i-chevron-left"/></svg></button>
+          <button type="button" class="icon-btn" id="coach-day-next" aria-label="Next day"><svg class="icon"><use href="#i-chevron-right"/></svg></button>
+        </div>
+      </header>
+
+      <div class="coach-day-bar">
+        <label class="field coach-day-pick">
+          <span class="field-label">Day</span>
+          <input type="date" id="coach-day-input" />
+        </label>
+        <button type="button" class="btn btn-primary" id="coach-day-refresh">Analyse day</button>
+      </div>
+
+      <div class="notice" id="coach-notice" hidden>
+        <p id="coach-notice-text"></p>
+      </div>
+
+      <article class="card" id="coach-meal-card">
+        <header class="card-head">
+          <div>
+            <p class="card-label">Meals this day</p>
+            <h2 id="coach-meal-source">–</h2>
+            <p class="muted" id="coach-meal-note"></p>
+          </div>
+        </header>
+        <ul class="coach-meal-list" id="coach-meal-list"></ul>
       </article>
+
+      <div id="coach-day-list" class="coach-list" aria-live="polite"></div>
+
+      <details class="coach-period-details">
+        <summary>Multi-day patterns (optional)</summary>
+        <div class="coach-actions" style="margin-top:12px">
+          <div class="period-pills" id="coach-periods" role="group" aria-label="Coach period">
+            <button type="button" class="period-pill active" data-days="7">7d</button>
+            <button type="button" class="period-pill" data-days="14">14d</button>
+            <button type="button" class="period-pill" data-days="30">30d</button>
+          </div>
+          <button type="button" class="btn btn-ghost" id="coach-refresh">Refresh period</button>
+        </div>
+        <p class="muted" id="coach-period">Period findings</p>
+        <div id="coach-list" class="coach-list"></div>
+      </details>
+
+      <p class="muted coach-disclaimer">Not medical advice. Follow your clinical team. Day findings use logged meals when available, otherwise your weekday/weekend meal schedule from Settings.</p>
     </section>
 
     <!-- Journal -->
@@ -140,8 +490,8 @@
       <label class="card dropzone" id="dropzone">
         <input type="file" id="import-file" accept=".csv,text/csv" class="visually-hidden" />
         <svg class="icon dropzone-icon"><use href="#i-plus"/></svg>
-        <span class="dropzone-title" id="dropzone-title">Drop your LibreLink export here, or choose a file</span>
-        <span class="muted dropzone-hint">On libreview.com, open Glucose History and choose Download glucose data. Cronometer and Whoop are coming next.</span>
+        <span class="dropzone-title" id="dropzone-title">Drop an export here, or choose a file</span>
+        <span class="muted dropzone-hint">LibreLink glucose history, Cronometer servings or daily summary, Whoop sleeps / workouts / physiological cycles.</span>
       </label>
 
       <p class="form-message error" id="import-error" hidden></p>
@@ -184,10 +534,11 @@
       <header class="view-head"><div><p class="eyebrow">Settings</p><h1>Your setup</h1></div></header>
 
       <form class="card settings-card" id="form-range" novalidate>
-        <header class="card-head"><div><h2>Goal range</h2><p class="muted">Everything is measured against this range. Lows are always judged at 70 and 54.</p></div></header>
+        <header class="card-head"><div><h2>Goal range</h2><p class="muted">Everything is measured against this range. Lows are always judged at 70 and 54. CV uses the international 36% stability line by default.</p></div></header>
         <div class="field-row">
           <label class="field"><span class="field-label">From (mg/dL)</span><input type="number" name="target_low" min="60" max="120" inputmode="numeric" required /></label>
           <label class="field"><span class="field-label">To (mg/dL)</span><input type="number" name="target_high" min="120" max="250" inputmode="numeric" required /></label>
+          <label class="field"><span class="field-label">Unstable if CV ≥ (%)</span><input type="number" name="cv_unstable_pct" min="20" max="50" step="1" inputmode="numeric" required /></label>
         </div>
         <div class="form-foot"><p class="form-message" role="status"></p><button type="submit" class="btn btn-primary">Save</button></div>
       </form>
@@ -216,6 +567,33 @@
           <textarea name="coach_brief" rows="7" maxlength="4000" placeholder="e.g. I train with weights in the evenings and won't move that. My team says inject 10–15 minutes before meals. I love pasta: suggest smarter versions, don't tell me to cut it. Morning lows worry me most."></textarea>
         </label>
         <div class="form-foot"><p class="form-message" role="status"></p><span class="muted char-count" id="brief-count"></span><button type="submit" class="btn btn-primary">Save</button></div>
+      </form>
+
+      <form class="card settings-card" id="form-meals" novalidate>
+        <header class="card-head"><div><h2>Typical meal times</h2><p class="muted">Main meals only (not snacks). Used by the coach on days without a food log. Set weekdays and weekends separately.</p></div></header>
+        <div class="meal-schedule-grid">
+          <fieldset class="meal-schedule-block" data-kind="weekday">
+            <legend>Weekdays</legend>
+            <label class="field"><span class="field-label">Main meals per day</span>
+              <select name="weekday_meal_count" id="weekday_meal_count">
+                <option value="1">1</option><option value="2">2</option><option value="3" selected>3</option>
+                <option value="4">4</option><option value="5">5</option><option value="6">6</option>
+              </select>
+            </label>
+            <div class="meal-time-rows" id="weekday_meal_rows"></div>
+          </fieldset>
+          <fieldset class="meal-schedule-block" data-kind="weekend">
+            <legend>Weekends</legend>
+            <label class="field"><span class="field-label">Main meals per day</span>
+              <select name="weekend_meal_count" id="weekend_meal_count">
+                <option value="1">1</option><option value="2">2</option><option value="3" selected>3</option>
+                <option value="4">4</option><option value="5">5</option><option value="6">6</option>
+              </select>
+            </label>
+            <div class="meal-time-rows" id="weekend_meal_rows"></div>
+          </fieldset>
+        </div>
+        <div class="form-foot"><p class="form-message" role="status"></p><button type="submit" class="btn btn-primary">Save</button></div>
       </form>
 
       <form class="card settings-card" id="form-insulin" novalidate>
@@ -248,8 +626,8 @@
     <a href="#today" class="tab" data-nav="today"><svg class="icon"><use href="#i-today"/></svg><span>Today</span></a>
     <a href="#trends" class="tab" data-nav="trends"><svg class="icon"><use href="#i-trends"/></svg><span>Trends</span></a>
     <button type="button" class="tab tab-log" data-open-sheet aria-label="Log something"><span class="tab-log-button"><svg class="icon"><use href="#i-plus"/></svg></span></button>
+    <a href="#lifestyle" class="tab" data-nav="lifestyle"><svg class="icon"><use href="#i-meal"/></svg><span>Lifestyle</span></a>
     <a href="#coach" class="tab" data-nav="coach"><svg class="icon"><use href="#i-coach"/></svg><span>Coach</span></a>
-    <a href="#journal" class="tab" data-nav="journal"><svg class="icon"><use href="#i-journal"/></svg><span>Journal</span></a>
   </nav>
 
   <div class="sheet-backdrop" id="sheet-backdrop" hidden></div>

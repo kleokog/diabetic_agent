@@ -1,8 +1,11 @@
+import { ensureCoach, initCoach, loadCoach } from "./coach.js";
 import { initImports, loadImportHistory, showImportView } from "./imports.js";
+import { ensureLifestyle, initLifestyle, loadLifestyle } from "./lifestyle.js";
 import { initSettings, loadSettings } from "./settings.js";
-import { loadToday, redrawChart } from "./today.js";
+import { ensureTrends, initTrends, loadTrends } from "./trends.js";
+import { initToday, loadToday, redrawChart } from "./today.js";
 
-const VIEWS = ["today", "trends", "coach", "journal", "settings", "import"];
+const VIEWS = ["today", "trends", "lifestyle", "coach", "journal", "settings", "import"];
 const NAV_FOR_VIEW = { import: "settings" };
 
 function currentView() {
@@ -20,6 +23,9 @@ function showView() {
     link.classList.toggle("active", link.dataset.nav === navName);
   });
   if (name === "today") redrawChart();
+  if (name === "trends") ensureTrends().catch(showError);
+  if (name === "lifestyle") ensureLifestyle().catch(showError);
+  if (name === "coach") ensureCoach().catch(showError);
   if (name === "settings") {
     loadSettings().catch(showError);
     loadImportHistory().catch(showError);
@@ -51,10 +57,23 @@ window.addEventListener("resize", () => {
 window.addEventListener("hashchange", showView);
 
 initSheet();
-initSettings(() => loadToday().catch(showError));
+initToday();
+initTrends();
+initLifestyle();
+initCoach();
+initSettings(() => {
+  loadToday().catch(showError);
+  loadTrends().catch(showError);
+  loadLifestyle().catch(showError);
+  loadCoach().catch(showError);
+});
 initImports(() => {
   loadToday().catch(showError);
+  loadTrends().catch(showError);
+  loadLifestyle().catch(showError);
+  loadCoach().catch(showError);
   loadImportHistory().catch(showError);
 });
 showView();
 loadToday().catch(showError);
+loadCoach().catch(showError);

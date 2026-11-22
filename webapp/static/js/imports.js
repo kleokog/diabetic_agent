@@ -9,6 +9,13 @@ const RESULT_LABELS = {
   priming: "priming shots (kept aside)",
   carbs: "carb entries",
   ketones: "ketone readings",
+  occasions: "eating occasions",
+  food_items: "food items",
+  group_totals: "meal-group nutrition rows",
+  daily_nutrition: "daily nutrition totals",
+  sleep: "sleep nights",
+  workouts: "workouts",
+  physiology: "recovery / strain days",
 };
 
 let preview = null;
@@ -33,7 +40,7 @@ function resetImport() {
   $("import-review").hidden = true;
   $("import-result").hidden = true;
   $("dropzone").hidden = false;
-  $("dropzone-title").textContent = "Drop your LibreLink export here, or choose a file";
+  $("dropzone-title").textContent = "Drop an export here, or choose a file";
   showError("");
 }
 
@@ -48,7 +55,7 @@ async function upload(file) {
     renderReview(preview);
   } catch (error) {
     showError(error.message);
-    $("dropzone-title").textContent = "Drop your LibreLink export here, or choose a file";
+    $("dropzone-title").textContent = "Drop an export here, or choose a file";
   } finally {
     $("dropzone").classList.remove("busy");
   }
@@ -57,7 +64,7 @@ async function upload(file) {
 function renderReview(data) {
   $("dropzone").hidden = true;
   $("import-review").hidden = false;
-  $("review-format").textContent = `${data.format_label} · ${data.unit}`;
+  $("review-format").textContent = data.unit ? `${data.format_label} · ${data.unit}` : data.format_label;
   $("review-file").textContent = data.file_name;
   $("review-range").textContent = data.start ? `${formatShortDate(data.start)} – ${formatShortDate(data.end)}` : "";
 
@@ -66,14 +73,14 @@ function renderReview(data) {
       const li = document.createElement("li");
       li.innerHTML = `
         <label class="check">
-          <input type="checkbox" value="${item.key}" ${item.new > 0 ? "checked" : ""} />
+          <input type="checkbox" value="${item.key}" ${item.new > 0 || item.count > 0 ? "checked" : ""} />
           <span class="review-label"></span>
         </label>
         <span class="review-detail muted"></span>
         <span class="review-count"></span>`;
       li.querySelector(".review-label").textContent = item.label;
       li.querySelector(".review-detail").textContent = item.detail || "";
-      const already = item.count - item.new;
+      const already = Math.max(0, item.count - item.new);
       li.querySelector(".review-count").innerHTML =
         `<strong>${item.new.toLocaleString()}</strong> new` + (already > 0 ? `<small>${already.toLocaleString()} already imported</small>` : "");
       return li;
@@ -81,7 +88,7 @@ function renderReview(data) {
   );
 
   const insulin = data.insulin;
-  $("review-insulin").hidden = !insulin || insulin.shots === 0;
+  $("review-insulin").hidden = !insulin || !insulin.shots;
   if (insulin && insulin.shots) {
     const parts = [];
     if (insulin.priming) parts.push(`${insulin.priming.toLocaleString()} small shots (${insulin.priming_max_units} u or less, just before a bigger dose from the same pen) look like priming and are kept aside.`);
@@ -91,9 +98,14 @@ function renderReview(data) {
   $("include-priming").checked = false;
 
   const notes = [];
-  if (data.problems.unreadable_time) notes.push(`${data.problems.unreadable_time.toLocaleString()} rows have an unreadable time and will be skipped.`);
-  if (data.problems.glucose_out_of_range) notes.push(`${data.problems.glucose_out_of_range.toLocaleString()} glucose values outside 20–600 mg/dL will be skipped.`);
-  if (data.ignored.sensor_events) notes.push(`${data.ignored.sensor_events.toLocaleString()} sensor events (such as sensor starts) contain no glucose and are ignored.`);
+  const problems = data.problems || {};
+  const ignored = data.ignored || {};
+  if (problems.unreadable_time) notes.push(`${problems.unreadable_time.toLocaleString()} rows have an unreadable time and will be skipped.`);
+  if (problems.glucose_out_of_range) notes.push(`${problems.glucose_out_of_range.toLocaleString()} glucose values outside 20–600 mg/dL will be skipped.`);
+  if (ignored.sensor_events) notes.push(`${ignored.sensor_events.toLocaleString()} sensor events (such as sensor starts) contain no glucose and are ignored.`);
+  if (data.format === "cronometer_servings") {
+    notes.push("Import Cronometer daily summary as well so meal carbs can fill in.");
+  }
   $("review-notes").replaceChildren(...notes.map((text) => Object.assign(document.createElement("li"), { textContent: text })));
   $("import-from").value = "";
 }

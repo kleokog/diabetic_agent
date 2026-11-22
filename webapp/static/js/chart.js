@@ -17,15 +17,27 @@ function cssVar(name) {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 }
 
+function isWalking(activity) {
+  const name = String(activity || "").trim().toLowerCase();
+  return name === "walking" || name === "walk" || name === "hike" || name === "hiking" || name.includes("walk");
+}
+
 /**
  * Draws one day of glucose: the goal band shaded, the line coloured by range,
  * scan readings as dots, and a hover/touch cursor with the exact value.
  */
-export function renderDayChart(container, tooltip, { readings, insulin = [], targetLow, targetHigh }) {
+export function renderDayChart(container, tooltip, {
+  readings,
+  insulin = [],
+  meals = [],
+  workouts = [],
+  targetLow,
+  targetHigh,
+}) {
   container.querySelectorAll("svg, .chart-empty").forEach((node) => node.remove());
   tooltip.hidden = true;
 
-  if (!readings.length && !insulin.length) {
+  if (!readings.length && !insulin.length && !meals.length && !workouts.length) {
     container.style.height = "";
     const empty = document.createElement("div");
     empty.className = "chart-empty";
@@ -116,6 +128,46 @@ export function renderDayChart(container, tooltip, { readings, insulin = [], tar
   }
 
   const plotBottom = PADDING.top + innerH;
+
+  // Meals and workouts: top event ticks so eating/exercise show on the glucose day.
+  const eventMarks = [
+    ...meals.map((m) => ({ minutes: minutesOfDay(m.t), kind: "meal", label: m.label || "Meal", detail: m.carbs != null ? `${Math.round(m.carbs)} g carbs` : "" })),
+    ...workouts.map((w) => {
+      const walk = isWalking(w.activity);
+      return {
+        minutes: minutesOfDay(w.t),
+        kind: walk ? "walk" : "training",
+        label: w.activity || (walk ? "Walk" : "Workout"),
+        detail: w.duration_min != null ? `${Math.round(w.duration_min)} min` : "",
+      };
+    }),
+  ];
+  for (const mark of eventMarks) {
+    const px = x(mark.minutes);
+    svg.append(el("line", {
+      class: `event-line event-${mark.kind}`,
+      x1: px, x2: px, y1: PADDING.top, y2: plotBottom,
+    }));
+    if (mark.kind === "meal") {
+      svg.append(el("polygon", {
+        class: "event-mark event-meal",
+        points: `${px},${PADDING.top + 2} ${px - 5},${PADDING.top + 12} ${px + 5},${PADDING.top + 12}`,
+      }));
+    } else {
+      const iconSize = 14;
+      const group = el("g", {
+        class: `event-mark event-${mark.kind}`,
+        transform: `translate(${(px - iconSize / 2).toFixed(1)}, ${PADDING.top})`,
+      });
+      group.append(el("use", {
+        href: mark.kind === "walk" ? "#i-walk" : "#i-dumbbell",
+        width: String(iconSize),
+        height: String(iconSize),
+      }));
+      svg.append(group);
+    }
+  }
+
   for (const marker of markers) {
     svg.append(el("line", { class: `dose-line dose-${marker.kind}`, x1: marker.px, x2: marker.px, y1: PADDING.top, y2: plotBottom }));
     const top = plotBottom + 8 + marker.row * MARKER_ROW_HEIGHT;
@@ -155,7 +207,14 @@ export function renderDayChart(container, tooltip, { readings, insulin = [], tar
     const nearbyDoses = markers
       .filter((m) => Math.abs(m.minutes - nearest.minutes) <= 10)
       .map((m) => `${m.units ?? "?"} u ${m.kind === "long" ? "long-acting" : "rapid"}`);
-    tooltip.textContent = [`${formatTime(nearest.t)} · ${nearest.v} mg/dL${nearest.kind === "scan" ? " · scan" : ""}`, ...nearbyDoses].join(" · ");
+    const nearbyEvents = eventMarks
+      .filter((m) => Math.abs(m.minutes - nearest.minutes) <= 20)
+      .map((m) => [m.label, m.detail].filter(Boolean).join(" "));
+    tooltip.textContent = [
+      `${formatTime(nearest.t)} · ${nearest.v} mg/dL${nearest.kind === "scan" ? " · scan" : ""}`,
+      ...nearbyDoses,
+      ...nearbyEvents,
+    ].join(" · ");
     tooltip.style.left = `${Math.min(Math.max(px, 70), width - 70)}px`;
     tooltip.style.top = `${Math.max(py - 44, -8)}px`;
     tooltip.hidden = false;
